@@ -1,0 +1,5 @@
+{
+  "provides": "jamsdk",
+  "c-sources": ["host_stubs.c"],
+  "targets": {}
+}
