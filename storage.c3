@@ -14,7 +14,7 @@ import jam::result;
 fn usz? kv_read(char* key, usz key_len, char* out, usz offset, usz max_len)
 {
     // service_id 0 means "self" in the read host function
-    ulong ret = host::host_read(0, key, key_len, out, offset, max_len);
+    ulong ret = host::host_read(types::HOST_NONE, key, key_len, out, offset, max_len);
     if (ret == types::HOST_NONE) return result::NO_KEY~;
     if (ret == types::HOST_OOB)  return result::NO_DATA~;
     return (usz)ret;

@@ -107,8 +107,8 @@ extern fn ulong host_peek(
 // Index 10: Write sub-VM memory.
 extern fn ulong host_poke(
     ulong machine_id,
-    char* data,
     ulong addr,
+    char* data,
     ulong len
 ) @cname("poke");
 
