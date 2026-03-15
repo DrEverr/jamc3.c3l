@@ -35,6 +35,17 @@ const ulong HOST_LOW  = 0xFFFF_FFFF_FFFF_FFF8;        // 2^64 - 8
 const ulong HOST_HUH  = 0xFFFF_FFFF_FFFF_FFF7;        // 2^64 - 9
 
 // ---------------------------------------------------------------------------
+// RefineResult - returned by refine() to jam_entry_refine.
+// Carries (ptr, len) in a0/a1 which become the PVM halt registers.
+// ---------------------------------------------------------------------------
+
+struct RefineResult
+{
+    char* ptr;
+    usz   len;
+}
+
+// ---------------------------------------------------------------------------
 // Fetch discriminators (host_call #1 sub-commands)
 // ---------------------------------------------------------------------------
 

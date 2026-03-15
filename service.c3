@@ -87,20 +87,25 @@ fn types::Balance? balance()
 }
 
 // ---------------------------------------------------------------------------
-// Return data to the PVM host.
-// Sets registers a0 (pointer) and a1 (length) via inline asm.
-// This is how refine results and authorizer results are communicated back.
+// Build a RefineResult to return from refine().
+// The entry point returns this struct, placing ptr in a0 and len in a1
+// at PVM halt time. This replaces the old @naked return_to_host approach
+// which was broken for non-trivial refine functions (epilogue clobbered regs).
 // ---------------------------------------------------------------------------
 
-fn void return_to_host(char* ptr, usz len) @naked
+fn types::RefineResult refine_ok(char* ptr, usz len)
 {
-    // On RISC-V (PolkaVM), a0 = x10, a1 = x11
-    // In the C ABI, the first two arguments are already in a0 and a1,
-    // so for a @naked function we just need to return.
-    // The caller passes ptr in a0 and len in a1 which is exactly
-    // what the host expects to find in those registers.
-    asm("ret");
+    types::RefineResult r = { ptr, len };
+    return r;
 }
+
+fn types::RefineResult refine_empty()
+{
+    types::RefineResult r = { null, 0 };
+    return r;
+}
+
+
 
 // ---------------------------------------------------------------------------
 // Transfer tokens to another service

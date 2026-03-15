@@ -16,15 +16,17 @@ import jam::log;
 // Just plain `refine` and `accumulate`.
 // ---------------------------------------------------------------------------
 
-extern fn void refine(types::RefineArgs* args);
+extern fn types::RefineResult refine(types::RefineArgs* args);
 extern fn void accumulate(types::AccumulateArgs* args);
 
 // ---------------------------------------------------------------------------
 // Refine entry point
 // ---------------------------------------------------------------------------
 
-fn void jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine")
+fn types::RefineResult jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine")
 {
+    types::RefineResult empty = { null, 0 };
+
     codec::DecodeCtx ctx = codec::decode_ctx_init(arg_ptr, arg_len);
 
     types::RefineArgs args;
@@ -33,7 +35,7 @@ fn void jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine
     if (catch core_idx)
     {
         log::err("JAM", "Refine: failed to decode core_index");
-        return;
+        return empty;
     }
     args.core_index = core_idx;
 
@@ -41,7 +43,7 @@ fn void jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine
     if (catch wi_idx)
     {
         log::err("JAM", "Refine: failed to decode work_item_index");
-        return;
+        return empty;
     }
     args.work_item_index = wi_idx;
 
@@ -49,7 +51,7 @@ fn void jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine
     if (catch svc_id)
     {
         log::err("JAM", "Refine: failed to decode service_id");
-        return;
+        return empty;
     }
     args.service_id = svc_id;
 
@@ -57,7 +59,7 @@ fn void jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine
     if (catch blob)
     {
         log::err("JAM", "Refine: failed to decode work_payload");
-        return;
+        return empty;
     }
     args.work_payload = blob.ptr;
     args.work_payload_len = blob.len;
@@ -65,10 +67,10 @@ fn void jam_entry_refine(char* arg_ptr, ulong arg_len) @export("jam_entry_refine
     if (catch codec::decode_fixed(&ctx, &args.work_package_hash, 32))
     {
         log::err("JAM", "Refine: failed to decode work_package_hash");
-        return;
+        return empty;
     }
 
-    refine(&args);
+    return refine(&args);
 }
 
 // ---------------------------------------------------------------------------
