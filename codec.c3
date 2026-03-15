@@ -44,46 +44,64 @@ fn ulong? decode_natural_num(DecodeCtx* ctx)
 {
     if (ctx.remaining == 0) return result::UNDECODABLE~;
 
-    char first = *ctx.ptr;
+    char header = *ctx.ptr;
     ctx.ptr++;
     ctx.remaining--;
 
-    if (first < 0x80)
+    // Count leading 1-bits to determine trailing byte count (len)
+    uint len;
+    if (header == 0xFF)
     {
-        return (ulong)first;
+        len = 8;
     }
-
-    // Count leading 1-bits to determine extra byte count
-    uint extra;
-    if (first == 0xFF)
+    else if (header < 0x80)
     {
-        extra = 8;
+        return (ulong)header;
     }
     else
     {
-        extra = 1;
+        len = 1;
         char mask = 0xC0;
-        while (extra < 7)
+        while (len < 7)
         {
-            if ((first & mask) != mask) break;
-            extra++;
+            if ((header & mask) != mask) break;
+            len++;
             mask = (char)((mask >> 1) | 0x80);
         }
     }
 
-    if (ctx.remaining < extra) return result::UNDECODABLE~;
+    if (ctx.remaining < len) return result::UNDECODABLE~;
 
-    // Read extra bytes as little-endian value
-    ulong value = 0;
-    for (uint i = 0; i < extra; i++)
+    if (len == 8)
     {
-        value |= (ulong)(ctx.ptr[i]) << (i * 8);
+        // 0xFF: next 8 bytes as u64 LE
+        ulong value = 0;
+        for (uint i = 0; i < 8; i++)
+        {
+            value |= (ulong)(ctx.ptr[i]) << (i * 8);
+        }
+        ctx.ptr += 8;
+        ctx.remaining -= 8;
+        return value;
     }
 
-    ctx.ptr += extra;
-    ctx.remaining -= extra;
+    // Threshold-based decode (Gray Paper Appendix C):
+    //   threshold = 256 - (1 << (8 - len))
+    //   header_value = header - threshold
+    //   value = (header_value << (8 * len)) | low_bytes_LE
+    ulong threshold = 256 - ((ulong)1 << (8 - len));
+    ulong header_value = (ulong)header - threshold;
 
-    return value;
+    ulong low = 0;
+    for (uint i = 0; i < len; i++)
+    {
+        low |= (ulong)(ctx.ptr[i]) << (i * 8);
+    }
+
+    ctx.ptr += len;
+    ctx.remaining -= len;
+
+    return (header_value << (len * 8)) | low;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,63 +113,49 @@ fn usz? encode_natural_num(char* buf, usz buf_len, ulong value)
 {
     if (buf_len < 9) return result::TOO_BIG~;
 
-    if (value == 0)
+    // Find len: smallest L in 0..7 such that value < 2^(7*(L+1)), or 8
+    uint len = 8;
+    ulong threshold_val = (ulong)1 << 7;   // 2^7 for L=0
+    for (uint l = 0; l <= 7; l++)
     {
-        buf[0] = 0x00;
-        return 1;
-    }
-
-    if (value < 0x80)
-    {
-        buf[0] = (char)value;
-        return 1;
-    }
-
-    // Determine how many bytes needed for the value
-    uint bytes_needed;
-    if (value < ((ulong)1 << 14)) {
-        bytes_needed = 2;
-    } else if (value < ((ulong)1 << 21)) {
-        bytes_needed = 3;
-    } else if (value < ((ulong)1 << 28)) {
-        bytes_needed = 4;
-    } else if (value < ((ulong)1 << 35)) {
-        bytes_needed = 5;
-    } else if (value < ((ulong)1 << 42)) {
-        bytes_needed = 6;
-    } else if (value < ((ulong)1 << 49)) {
-        bytes_needed = 7;
-    } else if (value < ((ulong)1 << 56)) {
-        bytes_needed = 8;
-    } else {
-        bytes_needed = 9;
-    }
-
-    if (bytes_needed == 9)
-    {
-        buf[0] = 0xFF;
-        for (uint i = 0; i < 8; i++)
+        if (value < threshold_val)
         {
-            buf[1 + i] = (char)(value >> (i * 8));
+            len = l;
+            break;
         }
-        return 9;
+        threshold_val = threshold_val << 7;
     }
 
-    // Prefix: (bytes_needed - 1) leading 1-bits, then a 0-bit
-    uint extra = bytes_needed - 1;
-    char prefix = 0;
-    for (uint i = 0; i < extra; i++)
+    if (len <= 7)
     {
-        prefix |= (char)((char)0x80 >> i);
-    }
-    buf[0] = prefix;
+        // Threshold-based encode (Gray Paper Appendix C):
+        //   threshold = 256 - (1 << (8 - len))   for len > 0, else 0
+        //   header = threshold + (value >> (8 * len))
+        //   trailing bytes = low bits of value in LE
+        ulong thr;
+        if (len == 0) {
+            thr = 0;
+        } else {
+            thr = 256 - ((ulong)1 << (8 - len));
+        }
+        char header = (char)(thr + (value >> (len * 8)));
+        buf[0] = header;
 
-    // Write LE value bytes after prefix
-    for (uint i = 0; i < extra; i++)
+        ulong remainder = value;
+        for (uint i = 0; i < len; i++)
+        {
+            buf[1 + i] = (char)(remainder >> (i * 8));
+        }
+        return (usz)(1 + len);
+    }
+
+    // len >= 8: 0xFF + 8 bytes LE
+    buf[0] = (char)0xFF;
+    for (uint i = 0; i < 8; i++)
     {
         buf[1 + i] = (char)(value >> (i * 8));
     }
-    return bytes_needed;
+    return 9;
 }
 
 // ---------------------------------------------------------------------------
