@@ -126,9 +126,9 @@ HOST_IMPORT_VOID(100, log, 5,
 // Refine-only host functions
 // ===========================================================================
 
-// Index 6: historical_lookup(service_id, hash, out, len) -> uint64_t
-HOST_IMPORT(6, 1, historical_lookup, 4,
-    uint64_t service_id, uint64_t hash, uint64_t out, uint64_t len)
+// Index 6: historical_lookup(service_id, hash, out, offset, max_len) -> uint64_t
+HOST_IMPORT(6, 1, historical_lookup, 5,
+    uint64_t service_id, uint64_t hash, uint64_t out, uint64_t offset, uint64_t max_len)
 
 // Index 7: export(ptr, len) -> uint64_t
 HOST_IMPORT(7, 1, export, 2,
@@ -142,9 +142,9 @@ HOST_IMPORT(8, 1, machine, 3,
 HOST_IMPORT(9, 1, peek, 4,
     uint64_t machine_id, uint64_t out, uint64_t addr, uint64_t len)
 
-// Index 10: poke(machine_id, data, addr, len) -> uint64_t
+// Index 10: poke(machine_id, addr, data, len) -> uint64_t
 HOST_IMPORT(10, 1, poke, 4,
-    uint64_t machine_id, uint64_t data, uint64_t addr, uint64_t len)
+    uint64_t machine_id, uint64_t addr, uint64_t data, uint64_t len)
 
 // Index 11: pages(machine_id, start, count, mode) -> uint64_t
 HOST_IMPORT(11, 1, pages, 4,
@@ -213,9 +213,9 @@ HOST_IMPORT(24, 1, forget, 2,
 HOST_IMPORT(25, 1, yield, 1,
     uint64_t hash)
 
-// Index 26: provide(service_id, offset, len) -> uint64_t
+// Index 26: provide(service_id, data_ptr, data_len) -> uint64_t
 HOST_IMPORT(26, 1, provide, 3,
-    uint64_t service_id, uint64_t offset, uint64_t len)
+    uint64_t service_id, uint64_t data_ptr, uint64_t data_len)
 
 
 // ===========================================================================

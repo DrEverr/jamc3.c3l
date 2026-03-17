@@ -80,7 +80,8 @@ extern fn ulong host_historical_lookup(
     ulong service_id,
     char* hash,
     char* out,
-    ulong len
+    ulong offset,
+    ulong max_len
 ) @cname("historical_lookup");
 
 // Index 7: Export data segment.
@@ -217,6 +218,6 @@ extern fn ulong host_yield(
 // Index 26: Provide preimage data.
 extern fn ulong host_provide(
     ulong service_id,
-    ulong offset,
+    char* data,
     ulong len
 ) @cname("provide");
