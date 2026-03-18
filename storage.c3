@@ -47,5 +47,5 @@ fn usz? kv_write(char* key, usz key_len, char* value, usz value_len)
 
 fn void? kv_delete(char* key, usz key_len)
 {
-    host::host_write(key, key_len, null, 0)!;
+    host::host_write(key, key_len, null, 0);
 }
