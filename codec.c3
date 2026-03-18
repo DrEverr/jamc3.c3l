@@ -1,7 +1,6 @@
 // JAM SDK - Binary Codec
-// Implements the JAM natural number variable-length encoding (Gray Paper Appendix C)
+// Implements the JAM natural number variable-length encoding (GrayPaper Appendix C)
 // and helpers for encoding/decoding fixed-width integers and length-prefixed blobs.
-// No stdlib dependency - operates on raw char slices.
 module jam::codec;
 
 import jam::result;

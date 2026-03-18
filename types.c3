@@ -1,5 +1,4 @@
 // JAM SDK - Protocol Types
-// All types understood by JAM services, matching the Gray Paper spec.
 module jam::types;
 
 // ---------------------------------------------------------------------------
@@ -10,7 +9,7 @@ alias ServiceId  = uint;     // N_S: 32-bit service identifier
 alias Timeslot   = uint;     // N_T: 32-bit timeslot index
 alias Gas        = ulong;    // N_G: 64-bit unsigned gas
 alias Balance    = ulong;    // N_B: 64-bit balance
-alias CoreIndex  = uint;     // N_C: core index (fits in uint for SDK)
+alias CoreIndex  = uint;     // N_C: 16-bit core index (fits in uint for SDK)
 
 // ---------------------------------------------------------------------------
 // Fixed-size byte types
@@ -20,7 +19,7 @@ alias Hash = char[32];       // H: 256-bit hash (blake2b-256)
 alias Memo = char[128];      // W_T: transfer memo (128 bytes)
 
 // ---------------------------------------------------------------------------
-// Host function sentinel return values (from Gray Paper Appendix)
+// Host function sentinel return values (from GrayPaper Appendix)
 // ---------------------------------------------------------------------------
 
 const ulong HOST_OK   = 0;
@@ -58,7 +57,6 @@ const ulong FETCH_SINGLE_ITEM       = 15;
 
 // ---------------------------------------------------------------------------
 // ServiceInfo - account metadata returned by host_info (96 bytes)
-// Matches the on-chain ServiceAccount summary.
 // ---------------------------------------------------------------------------
 
 struct ServiceInfo @packed
@@ -78,7 +76,7 @@ struct ServiceInfo @packed
 
 // ---------------------------------------------------------------------------
 // ChainParams - protocol constants fetched via host_fetch(CHAIN_PARAMS)
-// 134 bytes, packed, little-endian.
+// (134 bytes)
 // ---------------------------------------------------------------------------
 
 struct ChainParams @packed

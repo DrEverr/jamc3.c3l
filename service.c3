@@ -1,6 +1,5 @@
 // JAM SDK - High-level Service API
 // Convenience functions for common service operations.
-// No stdlib dependency.
 module jam::service;
 
 import jam::host;
@@ -59,8 +58,8 @@ fn void? chain_entropy(char* out_32)
 fn types::ServiceInfo? service_info()
 {
     types::ServiceInfo info;
-    ulong ret = host::host_info(0, (char*)&info);
-    if (ret == types::HOST_WHO) return result::HOST_ERROR~;
+    ulong ret = host::host_info(types::HOST_NONE, (char*)&info);
+    if (ret == types::HOST_NONE) return result::HOST_ERROR~;
     return info;
 }
 
@@ -72,7 +71,7 @@ fn types::ServiceInfo? service_info_of(types::ServiceId id)
 {
     types::ServiceInfo info;
     ulong ret = host::host_info((ulong)id, (char*)&info);
-    if (ret == types::HOST_WHO) return result::HOST_ERROR~;
+    if (ret == types::HOST_NONE) return result::HOST_ERROR~;
     return info;
 }
 
@@ -89,8 +88,7 @@ fn types::Balance? balance()
 // ---------------------------------------------------------------------------
 // Build a RefineResult to return from refine().
 // The entry point returns this struct, placing ptr in a0 and len in a1
-// at PVM halt time. This replaces the old @naked return_to_host approach
-// which was broken for non-trivial refine functions (epilogue clobbered regs).
+// at PVM halt time.
 // ---------------------------------------------------------------------------
 
 fn types::RefineResult refine_ok(char* ptr, usz len)
@@ -105,8 +103,6 @@ fn types::RefineResult refine_empty()
     return r;
 }
 
-
-
 // ---------------------------------------------------------------------------
 // Transfer tokens to another service
 // ---------------------------------------------------------------------------
@@ -119,7 +115,7 @@ fn void? transfer(types::ServiceId receiver, types::Balance amount, types::Gas g
         gas_limit,
         (char*)memo
     );
-    if (ret == types::HOST_WHO)  return result::HOST_ERROR~;
+    if (ret == types::HOST_WHO)  return result::UNREACHABLE~;
     if (ret == types::HOST_CASH) return result::INSUFFICIENT_BALANCE~;
     if (ret == types::HOST_LOW)  return result::HOST_ERROR~;
 }
@@ -163,6 +159,7 @@ fn types::ServiceId? new_service(
         gratis_offset,
         (ulong)desired_id
     );
+    if (ret == types::HOST_HUH) return result::HOST_UNPRIVILEGED~;
     if (ret == types::HOST_CASH) return result::INSUFFICIENT_BALANCE~;
     if (ret == types::HOST_FULL) return result::HOST_ERROR~;
     return (types::ServiceId)ret;
@@ -172,14 +169,13 @@ fn types::ServiceId? new_service(
 // Upgrade service code (accumulate only)
 // ---------------------------------------------------------------------------
 
-fn void? upgrade(types::Hash* code_hash, types::Gas min_gas_acc, types::Gas min_gas_memo)
+fn void upgrade(types::Hash* code_hash, types::Gas min_gas_acc, types::Gas min_gas_memo)
 {
     ulong ret = host::host_upgrade(
         (char*)code_hash,
         min_gas_acc,
         min_gas_memo
     );
-    if (ret == types::HOST_CASH) return result::INSUFFICIENT_BALANCE~;
 }
 
 // ---------------------------------------------------------------------------

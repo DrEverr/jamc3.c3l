@@ -1,6 +1,5 @@
 // JAM SDK - Logging
 // Wraps the host log function with level-specific helpers.
-// No stdlib dependency.
 module jam::log;
 
 import jam::host;

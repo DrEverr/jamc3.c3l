@@ -2,10 +2,8 @@
 // These are the raw PVM host-call declarations.
 // Each host function is imported by index as specified by the JAM protocol.
 //
-// In the C SDK these are declared via POLKAVM_IMPORT_WITH_INDEX macros which
-// embed metadata into special ELF sections. For C3 targeting PolkaVM, we
-// declare them as extern functions with @cname matching the symbol names
-// that polkavm-cc / polkatool expect.
+// For C3 targeting PolkaVM, we declare them as extern functions with
+// @cname matching the symbol names that polkavm-cc / polkatool expect.
 //
 // The actual binding mechanism depends on the PolkaVM toolchain resolving
 // these imports at link time. The C3 compiler emits standard C-ABI calls
