@@ -15,7 +15,7 @@ fn void jam_entry_is_authorized(char* arg_ptr, ulong arg_len) @export("jam_entry
 
     types::IsAuthorizedArgs args;
 
-    ushort? ci = codec::decode_var_u16(&ctx);
+    ushort? ci = codec::decode_u16(&ctx);
     if (catch ci)
     {
         log::err("JAM", "Authorizer: failed to decode core_index");
