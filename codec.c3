@@ -52,6 +52,31 @@ fn DecodeCtx decode_ctx_init(char* data, ulong len)
 //   0xFF        -> 9 bytes (prefix + 8 LE bytes)
 // ---------------------------------------------------------------------------
 
+// Count leading 1-bits in a byte to determine varint trailing byte count.
+// Isolated as @noinline to keep register pressure low in the caller.
+fn uint count_leading_ones(char header) @noinline
+{
+    uint len = 1;
+    char mask = 0xC0;
+    while (len < 7)
+    {
+        if ((header & mask) != mask) break;
+        len++;
+        mask = (char)((mask >> 1) | 0x80);
+    }
+    return len;
+}
+
+// Threshold-based varint decode: given header byte and trailing byte count,
+// compute the final value. @noinline to isolate register-heavy arithmetic.
+fn ulong decode_threshold(char header, uint len, char* data) @noinline
+{
+    ulong threshold = 256 - ((ulong)1 << (8 - len));
+    ulong header_value = (ulong)header - threshold;
+    ulong low = read_le_bytes(data, len);
+    return (header_value << (len * 8)) | low;
+}
+
 fn ulong? decode_natural_num(DecodeCtx* ctx)
 {
     if (ctx.remaining == 0) return result::UNDECODABLE~;
@@ -60,53 +85,30 @@ fn ulong? decode_natural_num(DecodeCtx* ctx)
     ctx.ptr++;
     ctx.remaining--;
 
-    // Count leading 1-bits to determine trailing byte count (len)
-    uint len;
-    if (header == 0xFF)
-    {
-        len = 8;
-    }
-    else if (header < 0x80)
+    // Fast path: single-byte value
+    if (header < 0x80)
     {
         return (ulong)header;
     }
-    else
-    {
-        len = 1;
-        char mask = 0xC0;
-        while (len < 7)
-        {
-            if ((header & mask) != mask) break;
-            len++;
-            mask = (char)((mask >> 1) | 0x80);
-        }
-    }
 
-    if (ctx.remaining < len) return result::UNDECODABLE~;
-
-    if (len == 8)
+    // 0xFF prefix: next 8 bytes as raw u64 LE
+    if (header == 0xFF)
     {
-        // 0xFF: next 8 bytes as u64 LE
-        // Use read_le_bytes to avoid loop unrolling that exceeds register count.
+        if (ctx.remaining < 8) return result::UNDECODABLE~;
         ulong value = read_le_bytes(ctx.ptr, 8);
         ctx.ptr += 8;
         ctx.remaining -= 8;
         return value;
     }
 
-    // Threshold-based decode:
-    //   threshold = 256 - (1 << (8 - len))
-    //   header_value = header - threshold
-    //   value = (header_value << (8 * len)) | low_bytes_LE
-    ulong threshold = 256 - ((ulong)1 << (8 - len));
-    ulong header_value = (ulong)header - threshold;
+    // Multi-byte: count leading 1-bits to get trailing byte count
+    uint len = count_leading_ones(header);
+    if (ctx.remaining < len) return result::UNDECODABLE~;
 
-    ulong low = read_le_bytes(ctx.ptr, len);
-
+    ulong value = decode_threshold(header, len, ctx.ptr);
     ctx.ptr += len;
     ctx.remaining -= len;
-
-    return (header_value << (len * 8)) | low;
+    return value;
 }
 
 // ---------------------------------------------------------------------------

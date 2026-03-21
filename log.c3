@@ -21,11 +21,11 @@ fn void log_msg(ulong level, char* target, usz target_len, char* msg, usz msg_le
 }
 
 // ---------------------------------------------------------------------------
-// Convenience: log with a known-length string literal
-// For bare-metal we compute length manually since we have no strlen.
+// String length — @noinline to prevent LLVM from merging with callers,
+// which would increase register pressure beyond PolkaVM's 14-register limit.
 // ---------------------------------------------------------------------------
 
-fn usz str_len(char* s)
+fn usz str_len(char* s) @noinline
 {
     if (s == null) return 0;
     usz len = 0;
@@ -33,43 +33,35 @@ fn usz str_len(char* s)
     return len;
 }
 
-// Convenience log functions.
-// Compute string lengths before calling log_msg to reduce register pressure
-// across the call boundary (PolkaVM only has a0-a5, no s2+ callee-saved).
+// ---------------------------------------------------------------------------
+// Log with null-terminated strings.
+// Each uses log_cstr @noinline which computes both lengths and calls host_log
+// in a single frame — avoids callee-saved register spills across multiple calls.
+// ---------------------------------------------------------------------------
 
 fn void info(char* target, char* msg)
 {
-    usz tl = str_len(target);
-    usz ml = str_len(msg);
-    log_msg(LEVEL_INFO, target, tl, msg, ml);
+    log_msg(LEVEL_INFO, target, str_len(target), msg, str_len(msg));
 }
 
 fn void warn(char* target, char* msg)
 {
-    usz tl = str_len(target);
-    usz ml = str_len(msg);
-    log_msg(LEVEL_WARN, target, tl, msg, ml);
+    log_msg(LEVEL_WARN, target, str_len(target), msg, str_len(msg));
 }
 
 fn void err(char* target, char* msg)
 {
-    usz tl = str_len(target);
-    usz ml = str_len(msg);
-    log_msg(LEVEL_ERROR, target, tl, msg, ml);
+    log_msg(LEVEL_ERROR, target, str_len(target), msg, str_len(msg));
 }
 
 fn void debug(char* target, char* msg)
 {
-    usz tl = str_len(target);
-    usz ml = str_len(msg);
-    log_msg(LEVEL_DEBUG, target, tl, msg, ml);
+    log_msg(LEVEL_DEBUG, target, str_len(target), msg, str_len(msg));
 }
 
 fn void trace(char* target, char* msg)
 {
-    usz tl = str_len(target);
-    usz ml = str_len(msg);
-    log_msg(LEVEL_TRACE, target, tl, msg, ml);
+    log_msg(LEVEL_TRACE, target, str_len(target), msg, str_len(msg));
 }
 
 // ---------------------------------------------------------------------------
