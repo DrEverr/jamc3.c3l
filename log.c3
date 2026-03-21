@@ -33,29 +33,43 @@ fn usz str_len(char* s)
     return len;
 }
 
+// Convenience log functions.
+// Compute string lengths before calling log_msg to reduce register pressure
+// across the call boundary (PolkaVM only has a0-a5, no s2+ callee-saved).
+
 fn void info(char* target, char* msg)
 {
-    log_msg(LEVEL_INFO, target, str_len(target), msg, str_len(msg));
+    usz tl = str_len(target);
+    usz ml = str_len(msg);
+    log_msg(LEVEL_INFO, target, tl, msg, ml);
 }
 
 fn void warn(char* target, char* msg)
 {
-    log_msg(LEVEL_WARN, target, str_len(target), msg, str_len(msg));
+    usz tl = str_len(target);
+    usz ml = str_len(msg);
+    log_msg(LEVEL_WARN, target, tl, msg, ml);
 }
 
 fn void err(char* target, char* msg)
 {
-    log_msg(LEVEL_ERROR, target, str_len(target), msg, str_len(msg));
+    usz tl = str_len(target);
+    usz ml = str_len(msg);
+    log_msg(LEVEL_ERROR, target, tl, msg, ml);
 }
 
 fn void debug(char* target, char* msg)
 {
-    log_msg(LEVEL_DEBUG, target, str_len(target), msg, str_len(msg));
+    usz tl = str_len(target);
+    usz ml = str_len(msg);
+    log_msg(LEVEL_DEBUG, target, tl, msg, ml);
 }
 
 fn void trace(char* target, char* msg)
 {
-    log_msg(LEVEL_TRACE, target, str_len(target), msg, str_len(msg));
+    usz tl = str_len(target);
+    usz ml = str_len(msg);
+    log_msg(LEVEL_TRACE, target, tl, msg, ml);
 }
 
 // ---------------------------------------------------------------------------

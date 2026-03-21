@@ -15,6 +15,19 @@ struct DecodeCtx
     ulong  remaining; // bytes left
 }
 
+// Read up to 8 bytes as little-endian u64 without loop unrolling.
+// Marked @noinline to prevent LLVM from unrolling into 8 separate loads
+// that would exceed PolkaVM's register file (a0-a5 only).
+fn ulong read_le_bytes(char* ptr, uint count) @noinline
+{
+    ulong value = 0;
+    for (uint i = 0; i < count; i++)
+    {
+        value |= (ulong)(ptr[i]) << (i * 8);
+    }
+    return value;
+}
+
 fn DecodeCtx decode_ctx_init(char* data, ulong len)
 {
     DecodeCtx ctx;
@@ -74,28 +87,21 @@ fn ulong? decode_natural_num(DecodeCtx* ctx)
     if (len == 8)
     {
         // 0xFF: next 8 bytes as u64 LE
-        ulong value = 0;
-        for (uint i = 0; i < 8; i++)
-        {
-            value |= (ulong)(ctx.ptr[i]) << (i * 8);
-        }
+        // Use read_le_bytes to avoid loop unrolling that exceeds register count.
+        ulong value = read_le_bytes(ctx.ptr, 8);
         ctx.ptr += 8;
         ctx.remaining -= 8;
         return value;
     }
 
-    // Threshold-based decode (Gray Paper Appendix C):
+    // Threshold-based decode:
     //   threshold = 256 - (1 << (8 - len))
     //   header_value = header - threshold
     //   value = (header_value << (8 * len)) | low_bytes_LE
     ulong threshold = 256 - ((ulong)1 << (8 - len));
     ulong header_value = (ulong)header - threshold;
 
-    ulong low = 0;
-    for (uint i = 0; i < len; i++)
-    {
-        low |= (ulong)(ctx.ptr[i]) << (i * 8);
-    }
+    ulong low = read_le_bytes(ctx.ptr, len);
 
     ctx.ptr += len;
     ctx.remaining -= len;
