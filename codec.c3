@@ -380,3 +380,13 @@ fn char* cabi_memcpy(char* dst, char* src, usz len) @export("memcpy")
     }
     return dst;
 }
+
+fn usz cabi_strlen(char* s) @export("strlen")
+{
+    usz len = 0;
+    while (s[len] != 0)
+    {
+        len++;
+    }
+    return len;
+}
