@@ -1,5 +1,7 @@
 {
   "provides": "jamc3",
   "c-sources": ["host_stubs.c"],
-  "targets": {}
+  "targets": {
+    "elf-riscv64": {}
+  }
 }
