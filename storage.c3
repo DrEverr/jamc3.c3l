@@ -1,6 +1,5 @@
 // JAM SDK - Key-Value Storage
 // High-level wrappers around host_read / host_write.
-// No stdlib dependency.
 module jam::storage;
 
 import jam::host;
@@ -47,5 +46,6 @@ fn usz? kv_write(char* key, usz key_len, char* value, usz value_len)
 
 fn void? kv_delete(char* key, usz key_len)
 {
-    host::host_write(key, key_len, null, 0);
+    ulong ret = host::host_write(key, key_len, null, 0);
+    if (ret == types::HOST_FULL) return result::INSUFFICIENT_BALANCE~;
 }

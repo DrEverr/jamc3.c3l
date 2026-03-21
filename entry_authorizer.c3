@@ -5,23 +5,24 @@ module jam::entry_auth;
 import jam::types;
 import jam::codec;
 import jam::log;
+import jam::authorizer;
 
 // User hook
-extern fn void is_authorized(types::IsAuthorizedArgs* args);
+extern fn void is_authorized(authorizer::Ctx* ctx);
 
 fn void jam_entry_is_authorized(char* arg_ptr, ulong arg_len) @export("jam_entry_is_authorized")
 {
-    codec::DecodeCtx ctx = codec::decode_ctx_init(arg_ptr, arg_len);
+    codec::DecodeCtx dec = codec::decode_ctx_init(arg_ptr, arg_len);
 
-    types::IsAuthorizedArgs args;
+    authorizer::Ctx ctx;
 
-    ushort? ci = codec::decode_u16(&ctx);
+    ushort? ci = codec::decode_u16(&dec);
     if (catch ci)
     {
         log::err("JAM", "Authorizer: failed to decode core_index");
         return;
     }
-    args.core_index = ci;
+    ctx._core_index = ci;
 
-    is_authorized(&args);
+    is_authorized(&ctx);
 }

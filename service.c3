@@ -171,7 +171,7 @@ fn types::ServiceId? new_service(
 
 fn void upgrade(types::Hash* code_hash, types::Gas min_gas_acc, types::Gas min_gas_memo)
 {
-    ulong ret = host::host_upgrade(
+    host::host_upgrade(
         (char*)code_hash,
         min_gas_acc,
         min_gas_memo

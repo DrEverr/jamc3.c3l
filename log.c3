@@ -21,8 +21,7 @@ fn void log_msg(ulong level, char* target, usz target_len, char* msg, usz msg_le
 }
 
 // ---------------------------------------------------------------------------
-// String length — @noinline to prevent LLVM from merging with callers,
-// which would increase register pressure beyond PolkaVM's 14-register limit.
+// String length.
 // ---------------------------------------------------------------------------
 
 fn usz str_len(char* s) @noinline
@@ -35,8 +34,6 @@ fn usz str_len(char* s) @noinline
 
 // ---------------------------------------------------------------------------
 // Log with null-terminated strings.
-// Each uses log_cstr @noinline which computes both lengths and calls host_log
-// in a single frame — avoids callee-saved register spills across multiple calls.
 // ---------------------------------------------------------------------------
 
 fn void info(char* target, char* msg)

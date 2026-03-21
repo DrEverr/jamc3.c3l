@@ -16,8 +16,6 @@ struct DecodeCtx
 }
 
 // Read up to 8 bytes as little-endian u64 without loop unrolling.
-// Marked @noinline to prevent LLVM from unrolling into 8 separate loads
-// that would exceed PolkaVM's register file (a0-a5 only).
 fn ulong read_le_bytes(char* ptr, uint count) @noinline
 {
     ulong value = 0;
@@ -53,7 +51,6 @@ fn DecodeCtx decode_ctx_init(char* data, ulong len)
 // ---------------------------------------------------------------------------
 
 // Count leading 1-bits in a byte to determine varint trailing byte count.
-// Isolated as @noinline to keep register pressure low in the caller.
 fn uint count_leading_ones(char header) @noinline
 {
     uint len = 1;
@@ -68,7 +65,7 @@ fn uint count_leading_ones(char header) @noinline
 }
 
 // Threshold-based varint decode: given header byte and trailing byte count,
-// compute the final value. @noinline to isolate register-heavy arithmetic.
+// compute the final value.
 fn ulong decode_threshold(char header, uint len, char* data) @noinline
 {
     ulong threshold = 256 - ((ulong)1 << (8 - len));
