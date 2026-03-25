@@ -96,7 +96,7 @@ The user implements these hooks; the SDK calls them:
 |--------|---------|
 | `ctx.timeslot()` | `Timeslot` |
 | `ctx.service_id()` | `ServiceId` |
-| `ctx.num_inputs()` | `Gas` |
+| `ctx.num_inputs()` | `ulong` |
 
 #### Fetch (GP eq 3943 — modes 0, 1, 14, 15 available)
 

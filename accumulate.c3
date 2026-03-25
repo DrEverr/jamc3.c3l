@@ -25,7 +25,7 @@ struct Ctx
 {
     types::Timeslot  _timeslot;
     types::ServiceId _service_id;
-    types::Gas       _num_inputs;
+    ulong            _num_inputs;
     char*            _inputs_buf;      // pointer to 65 536-byte buffer in entry.c3
     usz              _inputs_len;
     bool             _inputs_fetched;
@@ -51,7 +51,7 @@ fn types::Timeslot Ctx.timeslot(Ctx* self) { return self._timeslot; }
 fn types::ServiceId Ctx.service_id(Ctx* self) { return self._service_id; }
 
 // Total number of inputs (operands + transfers) in this accumulate round.
-fn types::Gas Ctx.num_inputs(Ctx* self) { return self._num_inputs; }
+fn ulong Ctx.num_inputs(Ctx* self) { return self._num_inputs; }
 
 // ---------------------------------------------------------------------------
 // Chain queries (read-only). See service.c3 for full documentation.
