@@ -60,24 +60,9 @@ fn types::Hash* Ctx.work_package_hash(Ctx* self) { return &self._work_package_ha
 // ---------------------------------------------------------------------------
 
 fn types::Gas Ctx.gas(Ctx* self) { return service::gas_remaining(); }
-fn types::ChainParams? Ctx.chain_params(Ctx* self) { return service::chain_params(); }
-fn void? Ctx.chain_entropy(Ctx* self, char* out_32) { return service::chain_entropy(out_32); }
 fn types::ServiceInfo? Ctx.service_info(Ctx* self) { return service::service_info(); }
 fn types::ServiceInfo? Ctx.service_info_of(Ctx* self, types::ServiceId id) { return service::service_info_of(id); }
 fn types::Balance? Ctx.balance(Ctx* self) { return service::balance(); }
-
-fn usz? Ctx.lookup(Ctx* self, char* hash, char* out, usz offset, usz max_len)
-{
-    ulong ret = host::host_lookup(hash, out, (ulong)offset, (ulong)max_len);
-    if (ret == types::HOST_NONE) return result::NO_DATA~;
-    return (usz)ret;
-}
-
-// Read from own KV storage (offset 0). Faults: result::NO_KEY.
-fn usz? Ctx.kv_read(Ctx* self, char* key, usz key_len, char* out, usz max_len)
-{
-    return storage::kv_read(key, key_len, out, 0, max_len);
-}
 
 // Historical preimage lookup (offset 0). Faults: result::NO_DATA.
 // For non-zero offset call host::host_historical_lookup() directly
@@ -103,6 +88,62 @@ fn ulong? Ctx.export_segment(Ctx* self, char* ptr, ulong len)
     if (ret == types::HOST_NONE) return result::NO_DATA~;
     return ret;
 }
+
+// ---------------------------------------------------------------------------
+// Fetch — data available in refine context (GP B.6)
+// Modes: 0(params), 1(H₀), 2(auth trace), 3-6(segments), 7-13(work package)
+// Modes 14-15 (accumulate items) return NONE in refine.
+// ---------------------------------------------------------------------------
+
+// Mode 0: Params
+fn types::ChainParams? Ctx.chain_params(Ctx* self) { return service::chain_params(); }
+
+// Mode 1: Entropy H₀ zero-hash
+fn void? Ctx.chain_entropy(Ctx* self, char* out_32) { return service::chain_entropy(out_32); }
+
+// Mode 2: Authorizer trace r
+fn usz? Ctx.auth_trace(Ctx* self, char* buf, usz buf_len) { return service::fetch_auth_trace(buf, buf_len); }
+
+// Mode 3: Extrinsic segment by item index + segment index
+fn usz? Ctx.extrinsic_segment(Ctx* self, uint item_idx, uint seg_idx, char* buf, usz buf_len) {
+    return service::fetch_extrinsic_segment(item_idx, seg_idx, buf, buf_len);
+}
+
+// Mode 4: Extrinsic segment for current work item
+fn usz? Ctx.extrinsic_segment_current(Ctx* self, uint seg_idx, char* buf, usz buf_len) {
+    return service::fetch_extrinsic_segment_current(seg_idx, buf, buf_len);
+}
+
+// Mode 5: Import segment by item index + segment index
+fn usz? Ctx.import_segment(Ctx* self, uint item_idx, uint seg_idx, char* buf, usz buf_len) {
+    return service::fetch_import_segment(item_idx, seg_idx, buf, buf_len);
+}
+
+// Mode 6: Import segment for current work item
+fn usz? Ctx.import_segment_current(Ctx* self, uint seg_idx, char* buf, usz buf_len) {
+    return service::fetch_import_segment_current(seg_idx, buf, buf_len);
+}
+
+// Mode 7: Encoded work-package E(p)
+fn usz? Ctx.work_package(Ctx* self, char* buf, usz buf_len) { return service::fetch_work_package(buf, buf_len); }
+
+// Mode 8: Work-package authorization p_f
+fn usz? Ctx.wp_authorization(Ctx* self, char* buf, usz buf_len) { return service::fetch_wp_authorization(buf, buf_len); }
+
+// Mode 9: Work-package justification p_j
+fn usz? Ctx.wp_justification(Ctx* self, char* buf, usz buf_len) { return service::fetch_wp_justification(buf, buf_len); }
+
+// Mode 10: Encoded refinement context E(p_c)
+fn usz? Ctx.refine_context(Ctx* self, char* buf, usz buf_len) { return service::fetch_refine_context(buf, buf_len); }
+
+// Mode 11: All work-item summaries
+fn usz? Ctx.item_summaries(Ctx* self, char* buf, usz buf_len) { return service::fetch_item_summaries(buf, buf_len); }
+
+// Mode 12: Specific work-item summary by index
+fn usz? Ctx.item_summary(Ctx* self, uint index, char* buf, usz buf_len) { return service::fetch_item_summary(index, buf, buf_len); }
+
+// Mode 13: Work-item payload by index
+fn usz? Ctx.nth_payload(Ctx* self, uint index, char* buf, usz buf_len) { return service::fetch_nth_payload(index, buf, buf_len); }
 
 // ---------------------------------------------------------------------------
 // Sub-VM (Machine)

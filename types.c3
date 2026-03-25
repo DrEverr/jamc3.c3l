@@ -51,6 +51,16 @@ struct RefineResult
 const ulong FETCH_CHAIN_PARAMS      = 0;
 const ulong FETCH_CHAIN_ENTROPY32   = 1;
 const ulong FETCH_AUTH_TRACE        = 2;
+const ulong FETCH_EXTRINSIC_SEG     = 3;
+const ulong FETCH_EXTRINSIC_SEG_CUR = 4;
+const ulong FETCH_IMPORT_SEG        = 5;
+const ulong FETCH_IMPORT_SEG_CUR    = 6;
+const ulong FETCH_WORK_PACKAGE      = 7;
+const ulong FETCH_WP_AUTH           = 8;
+const ulong FETCH_WP_JUSTIFICATION  = 9;
+const ulong FETCH_REFINE_CONTEXT    = 10;
+const ulong FETCH_ITEM_SUMMARIES    = 11;
+const ulong FETCH_ITEM_SUMMARY      = 12;
 const ulong FETCH_NTH_ITEM_PAYLOAD  = 13;
 const ulong FETCH_INPUTS            = 14;
 const ulong FETCH_SINGLE_ITEM       = 15;

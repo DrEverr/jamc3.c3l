@@ -58,8 +58,6 @@ fn types::Gas Ctx.num_inputs(Ctx* self) { return self._num_inputs; }
 // ---------------------------------------------------------------------------
 
 fn types::Gas Ctx.gas(Ctx* self) { return service::gas_remaining(); }
-fn types::ChainParams? Ctx.chain_params(Ctx* self) { return service::chain_params(); }
-fn void? Ctx.chain_entropy(Ctx* self, char* out_32) { return service::chain_entropy(out_32); }
 fn types::ServiceInfo? Ctx.service_info(Ctx* self) { return service::service_info(); }
 fn types::ServiceInfo? Ctx.service_info_of(Ctx* self, types::ServiceId id) { return service::service_info_of(id); }
 fn types::Balance? Ctx.balance(Ctx* self) { return service::balance(); }
@@ -69,6 +67,28 @@ fn usz? Ctx.lookup(Ctx* self, char* hash, char* out, usz offset, usz max_len)
     ulong ret = host::host_lookup(hash, out, (ulong)offset, (ulong)max_len);
     if (ret == types::HOST_NONE) return result::NO_DATA~;
     return (usz)ret;
+}
+
+// ---------------------------------------------------------------------------
+// Fetch — data available in accumulate context (GP eq 3943)
+// Modes: 0(params), 1(entropy η₀'), 14(all items), 15(single item)
+// Modes 2-13 (refine/authorizer only) return NONE in accumulate.
+// ---------------------------------------------------------------------------
+
+// Mode 0: Params
+fn types::ChainParams? Ctx.chain_params(Ctx* self) { return service::chain_params(); }
+
+// Mode 1: Entropy η₀' (32 bytes)
+fn void? Ctx.chain_entropy(Ctx* self, char* out_32) { return service::chain_entropy(out_32); }
+
+// Mode 14: All accumualte items
+fn usz? Ctx.fetch_items(Ctx* self, uint index, char* buf, usz buf_len) {
+  return service::fetch_inputs(buf, buf_len);
+}
+
+// Mode 15: Single accumulate item by index
+fn usz? Ctx.fetch_item(Ctx* self, uint index, char* buf, usz buf_len) {
+    return service::fetch_single_item(index, buf, buf_len);
 }
 
 // ---------------------------------------------------------------------------
